@@ -1,4 +1,4 @@
-package wsserver
+package main
 
 import (
 	"encoding/json"

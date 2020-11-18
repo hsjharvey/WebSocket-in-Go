@@ -1,6 +1,8 @@
 package main
 
-import "github.com/gorilla/websocket"
+import (
+	"github.com/gorilla/websocket"
+)
 
 const (
 	// Maximum message size
@@ -18,15 +20,18 @@ var upgrader = websocket.Upgrader{
 }
 
 const (
-	subjectsIDFilePath = "src/WS_server/id_verification_actual.json"
+	subjectsIDFilePath = "src/id_verification_actual.json"
 )
 
 type msgToSubject struct {
-	MsgType string `json:"msg_type"`
+	MsgType string      `json:"msg_type"`
 	Msg     interface{} `json:"msg"`
 }
 
 type message struct {
-	ID string
+	ID   string
 	data []byte
 }
+
+var subjectIDs = map[string]interface{}{}
+var practiceIDs = map[string]interface{}{}

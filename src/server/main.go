@@ -9,10 +9,12 @@ import (
 var addr = flag.String("addr", "localhost:8721", "http service address")
 
 func main() {
+	loadSubjectIds()
+
 	flag.Parse()
 	hub := newHub()
-	log.Println("Server starts successfully")
 	go hub.run()
+	log.Println("Server starts successfully")
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})

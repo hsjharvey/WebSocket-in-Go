@@ -17,9 +17,12 @@ type Client struct {
 	conn *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	hubToClientMsg chan []byte
 
 	ID string
+
+	playData []interface{}
+
+	gameInfo []interface{}
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -49,20 +52,24 @@ func (c *Client) readMsg() {
 		if topLayerMsg["msg_type"] == "game_version" {
 			if topLayerMsg["msg"] == "practice" {
 				log.Println("game_version: practice")
-			} else if topLayerMsg["msg"] == "game_version" {
+			} else if topLayerMsg["msg"] == "actual" {
 				log.Println("game_version: actual")
 			}
 		} else if topLayerMsg["msg_type"] == "register" {
-			log.Println(topLayerMsg["msg"])
 			if topLayerMsg["msg"] == "not_verified" {
-				log.Println("subject not verified")
+				log.Printf("subject not verified %s\n", topLayerMsg["msg"])
 			} else {
-				log.Printf("subject %s verified\n")
+				log.Printf("subject %s verified\n", topLayerMsg["msg"])
+				c.ID = topLayerMsg["msg"].(string)
 			}
 		} else if topLayerMsg["msg_type"] == "play_data" {
-			log.Println(topLayerMsg["msg"])
+			c.playData = append(c.playData, topLayerMsg["msg"])
+			log.Printf("receive message play_data from participant ID %s\n", c.ID)
+
 		} else if topLayerMsg["msg_type"] == "game_information" {
-			log.Println(topLayerMsg["msg"])
+			c.gameInfo = append(c.gameInfo , topLayerMsg["msg"])
+			log.Printf("receive message game_information from participant ID %s\n", c.ID)
+
 		} else {
 			log.Fatalf("Warning, unsupported event: %s", topLayerMsg["msg_type"])
 		}
@@ -76,7 +83,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, hubToClientMsg: make(chan []byte, 1024*256), ID: "default_" + string(rand.Intn(1000))}
+	client := &Client{hub: hub, conn: conn, ID: "default_" + string(rand.Intn(1000))}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

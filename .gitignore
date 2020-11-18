@@ -18,6 +18,8 @@
 
 .idea/
 
-src/server/id_verification_actual.json
+src/id_verification_actual.json
+src/id_verification_practice.json
 
 pkg/
+src/github.com/

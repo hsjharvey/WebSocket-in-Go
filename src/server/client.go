@@ -9,27 +9,16 @@ import (
 	"net/http"
 )
 
-// Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub *Hub
-
 	// The websocket connection.
 	conn *websocket.Conn
-
 	// Buffered channel of outbound messages.
-
 	ID string
-
 	playData []interface{}
-
 	gameInfo []interface{}
 }
 
-// readPump pumps messages from the websocket connection to the hub.
-//
-// The application runs readPump in a per-connection goroutine. The application
-// ensures that there is at most one reader on a connection by executing all
-// reads from this goroutine.
 func (c *Client) readMsg() {
 	topLayerMsg := make(map[string]interface{})
 	defer func() {
@@ -46,7 +35,6 @@ func (c *Client) readMsg() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		// c.hub.msg <- message
 
 		json.Unmarshal(message, &topLayerMsg) // decode the top layer incoming msg
 		if topLayerMsg["msg_type"] == "game_version" {
@@ -67,7 +55,7 @@ func (c *Client) readMsg() {
 			log.Printf("receive message play_data from participant ID %s\n", c.ID)
 
 		} else if topLayerMsg["msg_type"] == "game_information" {
-			c.gameInfo = append(c.gameInfo , topLayerMsg["msg"])
+			c.gameInfo = append(c.gameInfo, topLayerMsg["msg"])
 			log.Printf("receive message game_information from participant ID %s\n", c.ID)
 
 		} else {
@@ -76,7 +64,6 @@ func (c *Client) readMsg() {
 	}
 }
 
-// serveWs handles websocket requests from the peer.
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -86,7 +73,5 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{hub: hub, conn: conn, ID: "default_" + string(rand.Intn(1000))}
 	client.hub.register <- client
 
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
 	go client.readMsg()
 }

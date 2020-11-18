@@ -11,9 +11,6 @@ type Hub struct {
 	// Registered clients.
 	clients map[string]*Client
 
-	// Inbound messages from the clients.
-	msg chan message
-
 	// Register requests from the clients.
 	register chan *Client
 
@@ -25,7 +22,6 @@ type Hub struct {
 
 func newHub() *Hub {
 	return &Hub{
-		msg:        make(chan message),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[string]*Client),
@@ -39,7 +35,7 @@ func (h *Hub) run() {
 			h.clients[client.ID] = client
 			log.Println("new subject registration, sending verification details")
 
-			message := msgToSubject{"verified_users", subjectIDs}
+			message := msgToWebGL{"verified_users", subjectIDs}
 			err := client.conn.WriteJSON(message) // send verified users information to the newly registered client
 			if err != nil {
 				log.Fatalf("error in sending verified users! %s", err)
@@ -49,7 +45,7 @@ func (h *Hub) run() {
 			log.Printf("subject %s unregister\n", client.ID)
 			client.saveSubjectData()
 			if _, ok := h.clients[client.ID]; ok {
-				delete(h.connections, client.ID)
+				delete(h.clients, client.ID)  // delete active client when disconnect
 			}
 		}
 	}

@@ -14,7 +14,7 @@ func main() {
 	flag.Parse()
 	hub := newHub()
 	go hub.run()
-	log.Println("Server starts successfully")
+	log.Println("Server started successfully")
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})

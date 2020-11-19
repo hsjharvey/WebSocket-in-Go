@@ -14,7 +14,7 @@ type Client struct {
 	// The websocket connection.
 	conn *websocket.Conn
 	// Buffered channel of outbound messages.
-	ID string
+	ID       string
 	playData []interface{}
 	gameInfo []interface{}
 }
@@ -27,21 +27,31 @@ func (c *Client) readMsg() {
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
 	for {
-		_, message, err := c.conn.ReadMessage()
+		_, byteMsg, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		byteMsg = bytes.TrimSpace(bytes.Replace(byteMsg, newline, space, -1))
 
-		json.Unmarshal(message, &topLayerMsg) // decode the top layer incoming msg
+		json.Unmarshal(byteMsg, &topLayerMsg) // decode the top layer incoming msg
 		if topLayerMsg["msg_type"] == "game_version" {
 			if topLayerMsg["msg"] == "practice" {
 				log.Println("game_version: practice")
+				message := msgToWebGL{"verified_users", practiceIDs}
+				err := c.conn.WriteJSON(message) // send verified users information to the newly registered client
+				if err != nil {
+					log.Fatalf("error in sending verified users! %s", err)
+				}
 			} else if topLayerMsg["msg"] == "actual" {
 				log.Println("game_version: actual")
+				message := msgToWebGL{"verified_users", subjectIDs}
+				err := c.conn.WriteJSON(message) // send verified users information to the newly registered client
+				if err != nil {
+					log.Fatalf("error in sending verified users! %s", err)
+				}
 			}
 		} else if topLayerMsg["msg_type"] == "register" {
 			if topLayerMsg["msg"] == "not_verified" {
@@ -51,12 +61,14 @@ func (c *Client) readMsg() {
 				c.ID = topLayerMsg["msg"].(string)
 			}
 		} else if topLayerMsg["msg_type"] == "play_data" {
-			c.playData = append(c.playData, topLayerMsg["msg"])
-			log.Printf("receive message play_data from participant ID %s\n", c.ID)
+			json.Unmarshal([]byte(topLayerMsg["msg"].(string)), &playData)
+			c.playData = append(c.playData, playData)
+			log.Printf("receive incoming Message play_data from participant ID %s\n", c.ID)
 
 		} else if topLayerMsg["msg_type"] == "game_information" {
-			c.gameInfo = append(c.gameInfo, topLayerMsg["msg"])
-			log.Printf("receive message game_information from participant ID %s\n", c.ID)
+			json.Unmarshal([]byte(topLayerMsg["msg"].(string)), &gameInfoData)
+			c.gameInfo = append(c.gameInfo, gameInfoData)
+			log.Printf("receive incoming Message game_information from participant ID %s\n", c.ID)
 
 		} else {
 			log.Fatalf("Warning, unsupported event: %s", topLayerMsg["msg_type"])

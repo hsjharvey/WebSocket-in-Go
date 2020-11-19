@@ -35,12 +35,6 @@ func (h *Hub) run() {
 			h.clients[client.ID] = client
 			log.Println("new subject registration, sending verification details")
 
-			message := msgToWebGL{"verified_users", subjectIDs}
-			err := client.conn.WriteJSON(message) // send verified users information to the newly registered client
-			if err != nil {
-				log.Fatalf("error in sending verified users! %s", err)
-			}
-
 		case client := <-h.unregister:
 			log.Printf("subject %s unregister\n", client.ID)
 			client.saveSubjectData()

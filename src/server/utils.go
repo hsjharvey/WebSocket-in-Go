@@ -67,7 +67,7 @@ func loadSubjectIds() {
 }
 
 func (c *Client) saveSubjectData() {
-	jsonString, err := json.Marshal(c.playData)
+	jsonString, err := json.MarshalIndent(c.playData, "", " ")
 	if err != nil {
 		log.Fatalf("error in writing play data files! #{err}")
 	} else {
@@ -75,7 +75,7 @@ func (c *Client) saveSubjectData() {
 		log.Println("play data saved.")
 	}
 
-	jsonString, err = json.Marshal(c.gameInfo)
+	jsonString, err = json.MarshalIndent(c.gameInfo, "", " ")
 	if err != nil {
 		log.Fatalf("error in writing game info data files! #{err}")
 	} else {

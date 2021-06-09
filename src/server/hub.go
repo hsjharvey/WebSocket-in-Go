@@ -17,6 +17,7 @@ type Hub struct {
 	// Unregister requests from clients.
 	unregister chan *Client
 
+	// Collection of websocket connections
 	connections map[string]*websocket.Conn
 }
 
@@ -33,11 +34,11 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			h.clients[client.ID] = client
-			log.Println("new subject registration, sending verification details")
+			log.Println("new subject registration, sending verification details...")
 
 		case client := <-h.unregister:
 			log.Printf("subject %s unregister\n", client.ID)
-			client.saveSubjectData()
+			client.saveClientData()
 			if _, ok := h.clients[client.ID]; ok {
 				delete(h.clients, client.ID)  // delete active client when disconnect
 			}

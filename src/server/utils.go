@@ -12,8 +12,8 @@ import (
 const (
 	// Maximum message size
 	maxMessageSize     = 1024 * 10
-	subjectsIDFilePath = "src/id_verification_actual.json"
-	practiceIDFilePath = "src/id_verification_practice.json"
+	subjectsIDFilePath = "./src/server/input/id_verification_actual.json"
+	practiceIDFilePath = "./src/server/input/id_verification_practice.json"
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 	}
 )
 
-type msgToWebGL struct {
+type msgToClient struct {
 	MsgType string      `json:"msg_type"`
 	Msg     interface{} `json:"msg"`
 }
@@ -63,11 +63,10 @@ func loadSubjectIds() {
 	}
 
 	log.Println("finish loading user verification information")
-
 }
 
-func (c *Client) saveSubjectData() {
-	jsonString, err := json.MarshalIndent(c.playData, "", " ")
+func (c *Client) saveClientData() {
+	jsonString, err := json.MarshalIndent(c.playData, "", "  ")
 	if err != nil {
 		log.Fatalf("error in writing play data files! #{err}")
 	} else {
@@ -75,7 +74,7 @@ func (c *Client) saveSubjectData() {
 		log.Println("play data saved.")
 	}
 
-	jsonString, err = json.MarshalIndent(c.gameInfo, "", " ")
+	jsonString, err = json.MarshalIndent(c.gameInfo, "", "   ")
 	if err != nil {
 		log.Fatalf("error in writing game info data files! #{err}")
 	} else {

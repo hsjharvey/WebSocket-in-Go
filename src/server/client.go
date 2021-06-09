@@ -11,10 +11,13 @@ import (
 
 type Client struct {
 	hub *Hub
-	// The websocket connection.
+	// client specific websocket connection.
 	conn *websocket.Conn
-	// Buffered channel of outbound messages.
+
+	// client ID
 	ID       string
+
+	// collection of client specific data.
 	playData []interface{}
 	gameInfo []interface{}
 }
@@ -25,7 +28,9 @@ func (c *Client) readMsg() {
 		c.hub.unregister <- c
 		c.conn.Close()
 	}()
+
 	c.conn.SetReadLimit(maxMessageSize)
+
 	for {
 		_, byteMsg, err := c.conn.ReadMessage()
 		if err != nil {
@@ -40,14 +45,14 @@ func (c *Client) readMsg() {
 		if topLayerMsg["msg_type"] == "game_version" {
 			if topLayerMsg["msg"] == "practice" {
 				log.Println("game_version: practice")
-				message := msgToWebGL{"verified_users", practiceIDs}
+				message := msgToClient{"verified_users", practiceIDs}
 				err := c.conn.WriteJSON(message) // send verified users information to the newly registered client
 				if err != nil {
 					log.Fatalf("error in sending verified users! %s", err)
 				}
 			} else if topLayerMsg["msg"] == "actual" {
 				log.Println("game_version: actual")
-				message := msgToWebGL{"verified_users", subjectIDs}
+				message := msgToClient{"verified_users", subjectIDs}
 				err := c.conn.WriteJSON(message) // send verified users information to the newly registered client
 				if err != nil {
 					log.Fatalf("error in sending verified users! %s", err)
@@ -68,7 +73,7 @@ func (c *Client) readMsg() {
 		} else if topLayerMsg["msg_type"] == "game_information" {
 			json.Unmarshal([]byte(topLayerMsg["msg"].(string)), &gameInfoData)
 			c.gameInfo = append(c.gameInfo, gameInfoData)
-			log.Printf("receive incoming Message game_information from participant ID %s\n", c.ID)
+			log.Printf("receive incoming Message game_info from participant ID %s\n", c.ID)
 
 		} else {
 			log.Fatalf("Warning, unsupported event: %s", topLayerMsg["msg_type"])
@@ -78,6 +83,7 @@ func (c *Client) readMsg() {
 
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
+
 	if err != nil {
 		log.Println(err)
 		return

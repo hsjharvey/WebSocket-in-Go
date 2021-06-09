@@ -15,6 +15,7 @@ func main() {
 	hub := newHub()
 	go hub.run()
 	log.Println("Server started successfully")
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
